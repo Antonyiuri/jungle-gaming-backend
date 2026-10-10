@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS inbox_messages;
+DROP TABLE IF EXISTS outbox_events;
+DROP TABLE IF EXISTS wallet_ledger_entries;
+DROP TABLE IF EXISTS wager_transactions;
+DROP TABLE IF EXISTS wallets;
+DROP FUNCTION IF EXISTS validate_ledger_state();
+DROP FUNCTION IF EXISTS validate_transaction_financial_state();
+DROP FUNCTION IF EXISTS validate_wallet_movement();
+DROP FUNCTION IF EXISTS guard_outbox_update();
+DROP FUNCTION IF EXISTS guard_transaction_update();
+DROP FUNCTION IF EXISTS deny_ledger_mutation();
