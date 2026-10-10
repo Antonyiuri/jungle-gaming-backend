@@ -115,9 +115,9 @@ SIGKILL antes do commit; entre commit e ACK (broker congelado); de todas as inst
 ## 8. Git e publicação
 
 - `git rev-parse --show-toplevel` no início apontava para o **repositório pai** (`Área de Trabalho`, remoto `Antonyiuri/trabalhando-com-branches`, ramo `feat/shell-central-aplicacoes-ui`), onde `jungle_gaming/` era uma pasta **não rastreada**. Adicioná-la ali misturaria o projeto com trabalho não relacionado; por isso foi criado um repositório **independente** dentro de `jungle_gaming/` (`git init -b main`), que o repositório pai continua vendo como pasta não rastreada, sem alteração.
-- Conteúdo versionado: 84 arquivos de código, migrations, Compose, documentação e testes. **Não** são versionados `.env`, `.local/` (chaves IAM geradas), `.cache/`, `.tools/` (toolchain Go local) nem binários.
+- Conteúdo versionado: 85 arquivos de código, migrations, Compose, documentação e testes. **Não** são versionados `.env`, `.local/` (chaves IAM geradas), `.cache/`, `.tools/` (toolchain Go local) nem binários.
 - Varredura de segredos nos arquivos versionados: sem chaves privadas, chaves AWS, tokens ou JWTs. Os únicos achados são os **valores descartáveis do ambiente local**, rotulados como tais (`localpassword`, `local-admin-password`, `local-<cliente>-secret`), necessários para o provisionamento reproduzível do IdP e do banco.
-- Histórico em inglês, em commits por camada, cada um compilável. **Nenhum remoto foi configurado e nada foi publicado.**
+- Histórico em inglês, 15 commits por camada (domínio → banco → persistência → casos de uso → HTTP → mensageria → workers → composição → build → E2E → documentação). Cada commit que contém código compila e passa em `go build` e `go vet` (verificado em *worktrees* temporários). **Nenhum remoto foi configurado e nada foi publicado.**
 - Para publicar (depois que você escolher o destino): `git remote add origin <URL>` e `git push -u origin main`. Se o destino for público, revise antes a licença e os nomes de pessoas no repositório.
 
 ## 9. Problemas remanescentes
