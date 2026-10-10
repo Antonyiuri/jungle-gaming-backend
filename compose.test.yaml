@@ -1,0 +1,35 @@
+# Overlay used together with compose.yaml:
+#   docker compose -f compose.yaml -f compose.test.yaml ...
+services:
+  migrate-test:
+    image: migrate/migrate:v4.18.3
+    command: [-path, /migrations, -database, "postgres://jungle:localpassword@postgres:5432/jungle_test?sslmode=disable", up]
+    volumes:
+      - ./migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # Go toolchain with a C compiler, so `-race` works. Connects with the least-privilege runtime role.
+  tests:
+    image: golang:1.27.2
+    profiles: [tests]
+    working_dir: /src
+    environment:
+      TEST_DATABASE_URL: postgres://jungle_app:localpassword@postgres:5432/jungle_test?sslmode=disable
+      # Owner connection, used only by the test that corrupts a wallet on purpose to prove reconciliation reports it.
+      TEST_ADMIN_DATABASE_URL: postgres://jungle:localpassword@postgres:5432/jungle_test?sslmode=disable
+      GOFLAGS: -buildvcs=false
+      CGO_ENABLED: "1"
+    volumes:
+      - ./:/src
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    depends_on:
+      migrate-test:
+        condition: service_completed_successfully
+
+volumes:
+  go-mod-cache:
+  go-build-cache:

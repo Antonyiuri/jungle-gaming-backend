@@ -1,0 +1,31 @@
+# Overlay: run the same stack against LocalStack Community instead of the default MiniStack broker.
+#
+#   docker compose -f compose.yaml -f compose.localstack.yaml up -d --build --wait app
+#
+# LocalStack Community accepts the same provisioning but does NOT enforce IAM policies (not even with
+# ENFORCE_IAM=1, verified with 4.14.0): the access control of the queues is declared but not proven, and the
+# end-to-end policy-matrix test skips itself. Queue access is still protected by the OIDC token in each message.
+services:
+  broker:
+    image: localstack/localstack:4.14.0
+    environment: !override
+      SERVICES: sqs,iam,sts
+      AWS_DEFAULT_REGION: us-east-1
+      SQS_ENDPOINT_STRATEGY: path
+      LOCALSTACK_HOST: broker:4566
+      DEBUG: "0"
+    healthcheck: !override
+      test: [CMD, awslocal, sqs, list-queues]
+      interval: 5s
+      timeout: 20s # the awslocal CLI is slow to start when the machine is busy
+      retries: 40
+      start_period: 10s
+
+  # LocalStack's path-style queue URLs.
+  app: &localstack-queues
+    environment:
+      SQS_INPUT_QUEUE_URL: http://broker:4566/queue/us-east-1/000000000000/wager-transactions.fifo
+      SQS_OUTPUT_QUEUE_URL: http://broker:4566/queue/us-east-1/000000000000/wallet-events.fifo
+      SQS_INPUT_DLQ_URL: http://broker:4566/queue/us-east-1/000000000000/wager-transactions-dlq.fifo
+  app-2: *localstack-queues
+  app-3: *localstack-queues

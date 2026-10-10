@@ -1,0 +1,162 @@
+name: ${COMPOSE_PROJECT_NAME:-jungle-gaming}
+
+x-app: &app
+  image: jungle-gaming-backend:local
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp
+  volumes:
+    - ./.local:/runtime:ro
+  environment:
+    HTTP_ADDR: :8080
+    DATABASE_URL: postgres://jungle_app:localpassword@postgres:5432/jungle?sslmode=disable
+    OIDC_ISSUER_URL: http://idp.localhost:8081/realms/jungle
+    OIDC_AUDIENCE: jungle-backend
+    AWS_REGION: us-east-1
+    AWS_EC2_METADATA_DISABLED: "true"
+    SQS_ENDPOINT_URL: http://broker:4566
+    SQS_INPUT_QUEUE_URL: http://broker:4566/000000000000/wager-transactions.fifo
+    SQS_OUTPUT_QUEUE_URL: http://broker:4566/000000000000/wallet-events.fifo
+    SQS_INPUT_DLQ_URL: http://broker:4566/000000000000/wager-transactions-dlq.fifo
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+    provision:
+      condition: service_completed_successfully
+    keycloak:
+      condition: service_healthy
+  healthcheck:
+    test: [CMD, wget, --quiet, --spider, http://127.0.0.1:8080/health/ready]
+    interval: 10s
+    timeout: 5s
+    retries: 6
+    start_period: 20s
+  # Must exceed SHUTDOWN_TIMEOUT (30s) plus the Fx stop margin.
+  stop_grace_period: 45s
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jungle
+      POSTGRES_PASSWORD: localpassword
+      POSTGRES_DB: jungle
+    ports:
+      - 127.0.0.1:${POSTGRES_PORT:-5432}:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./deploy/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # TCP probe: during first-run initialisation the temporary server answers only on the Unix socket.
+      test: [CMD-SHELL, pg_isready -h 127.0.0.1 -U jungle -d jungle]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    command: [start-dev, --import-realm, --http-port=8081, --hostname=http://idp.localhost:8081]
+    restart: unless-stopped
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: local-admin-password
+      KC_HEALTH_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: localpassword
+      JAVA_OPTS_KC_HEAP: -XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30
+    ports:
+      - 127.0.0.1:${KEYCLOAK_PORT:-8081}:8081
+    volumes:
+      - ./deploy/keycloak:/opt/keycloak/data/import:ro
+    networks:
+      default:
+        aliases: [idp.localhost]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"GET /health/ready HTTP/1.0\r\n\r\n\" >&3; grep -q \"200 OK\" <&3'"
+      interval: 5s
+      timeout: 10s
+      # The first boot imports the realm and initialises the master realm, which took ~15 minutes on a
+      # 3.5 GB Docker VM; later boots are much faster. The budget below is 15 minutes.
+      retries: 180
+      start_period: 30s
+
+  # SQS and IAM emulator. MiniStack (MIT) with AUTH=true evaluates the identity policies of IAM users, which is
+  # what makes the broker-level access control real; LocalStack Community does not enforce IAM at all (see the
+  # README and compose.localstack.yaml). The pinned digest keeps the build reproducible.
+  broker:
+    image: ministackorg/ministack:1.5.25@sha256:1754efa38cac6fbaa696d9ce0fe30cd28f74e67e4ba60167a8a96bd167dfd9b1
+    restart: unless-stopped
+    environment:
+      AUTH: "true"
+      LOG_LEVEL: INFO
+    ports:
+      - 127.0.0.1:${BROKER_PORT:-4566}:4566
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4566/health', timeout=5)"]
+      interval: 5s
+      timeout: 10s
+      retries: 40
+      start_period: 5s
+
+  # Creates the queues, the dead-letter queues, one IAM identity per role and their policies, writes the keys to
+  # .local and probes that the broker really refuses what the policies do not allow.
+  provision:
+    build: ./deploy/broker
+    image: jungle-gaming-provision:local
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      SQS_ENDPOINT_URL: http://broker:4566
+      RUNTIME_DIRECTORY: /runtime
+    volumes:
+      - ./.local:/runtime
+    depends_on:
+      broker:
+        condition: service_healthy
+    restart: "no"
+
+  migrate:
+    image: migrate/migrate:v4.18.3
+    command: [-path, /migrations, -database, "postgres://jungle:localpassword@postgres:5432/jungle?sslmode=disable", up]
+    volumes:
+      - ./migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # Only `app` builds the image. The extra instances reuse it, so parallel builds never race on one tag;
+  # always start them together with `app` and --build (see README).
+  app:
+    <<: *app
+    build: .
+    ports:
+      - 127.0.0.1:${API_PORT:-8080}:8080
+
+  app-2:
+    <<: *app
+    pull_policy: never
+    profiles: [e2e]
+    ports:
+      - 127.0.0.1:${API_2_PORT:-8082}:8080
+
+  app-3:
+    <<: *app
+    pull_policy: never
+    profiles: [e2e]
+    ports:
+      - 127.0.0.1:${API_3_PORT:-8083}:8080
+
+volumes:
+  postgres-data:

@@ -1,0 +1,13 @@
+# Overlay that swaps the application instances for race-instrumented builds, used by the E2E suite:
+#   docker compose -f compose.yaml -f compose.race.yaml --profile e2e up -d --build --wait app app-2 app-3
+# The race detector prints "WARNING: DATA RACE" to the container logs; the E2E suite fails on it when E2E_RACE=1.
+services:
+  app:
+    image: jungle-gaming-backend:race
+    build:
+      context: .
+      target: runtime-race
+  app-2:
+    image: jungle-gaming-backend:race
+  app-3:
+    image: jungle-gaming-backend:race
