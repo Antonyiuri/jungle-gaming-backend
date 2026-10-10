@@ -1,0 +1,4 @@
+# Keep line endings stable across Windows, macOS and Linux checkouts (shell scripts run in Linux containers).
+* text=auto eol=lf
+*.png binary
+*.jpg binary

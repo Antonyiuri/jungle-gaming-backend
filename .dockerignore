@@ -1,0 +1,14 @@
+.git
+.agents
+.codex
+.aws
+.env
+.local
+.tools
+.cache
+tmp
+bin
+coverage*
+*.log
+docs
+*.md

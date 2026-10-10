@@ -1,0 +1,27 @@
+# Local environment and generated credentials (disposable, never committed)
+.env
+.local/
+
+# Toolchain and caches kept inside the project directory
+.tools/
+.cache/
+
+# Build and test output
+*.exe
+*.test
+*.out
+coverage*
+test-results/
+bin/
+tmp/
+*.log
+
+# Editors, assistants and operating systems
+.vscode/
+.idea/
+.agents/
+.codex/
+.aws/
+*.swp
+.DS_Store
+Thumbs.db
