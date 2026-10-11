@@ -102,6 +102,8 @@ Valores locais descartáveis em [.env.example](.env.example); nunca reutilize es
 
 Constantes no código/provisionamento (não são variáveis): lease de 30 s para outbox e referências, *backoff* de 1 s a 5 min com jitter, visibilidade SQS de 60 s, `maxReceiveCount` 5, retenção da DLQ de 14 dias.
 
+Para ver o sistema funcionando de ponta a ponta (autenticação, saldo, ledger, idempotência, concorrência, SQS, reconciliação e recuperação de uma instância), rode `./scripts/demo.ps1`; o roteiro está em [docs/DEMO.md](docs/DEMO.md).
+
 ## Chamadas HTTP
 
 Todas as rotas de negócio exigem Bearer token. `provider-a`/`provider-b` só enxergam as próprias transações; `wallet-service` abre e consulta carteiras. `/health/live` e `/health/ready` são públicos; `/metrics` exige o cliente interno.
