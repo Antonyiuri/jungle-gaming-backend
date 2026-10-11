@@ -3,9 +3,9 @@ package application
 import (
 	"context"
 
-	"github.com/junglegaming/backend-challenge-go/internal/auth"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/auth"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
 )
 
 type Service struct{ store *store.Store }

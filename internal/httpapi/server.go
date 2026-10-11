@@ -12,14 +12,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/application"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/auth"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/config"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/jsonutil"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/observability"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/trace"
 	"github.com/google/uuid"
-	"github.com/junglegaming/backend-challenge-go/internal/application"
-	"github.com/junglegaming/backend-challenge-go/internal/auth"
-	"github.com/junglegaming/backend-challenge-go/internal/config"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/jsonutil"
-	"github.com/junglegaming/backend-challenge-go/internal/observability"
-	"github.com/junglegaming/backend-challenge-go/internal/trace"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 

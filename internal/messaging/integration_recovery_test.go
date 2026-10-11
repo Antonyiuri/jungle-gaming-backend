@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/observability"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/junglegaming/backend-challenge-go/internal/observability"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
 )
 
 // A publisher that dies after the broker accepted a message but before the row was marked leaves

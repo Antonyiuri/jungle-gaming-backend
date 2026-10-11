@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
 )
 
 func TestConcurrentWalletCreationCreditsOnce(t *testing.T) {

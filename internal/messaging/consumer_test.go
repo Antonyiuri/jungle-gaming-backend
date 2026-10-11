@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/auth"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/observability"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"github.com/junglegaming/backend-challenge-go/internal/auth"
-	"github.com/junglegaming/backend-challenge-go/internal/observability"
 )
 
 // ctxAwareQueue behaves like the real SDK: calls made with an expired context fail instead of succeeding.

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/junglegaming/backend-challenge-go/internal/config"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/config"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )

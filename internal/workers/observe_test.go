@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junglegaming/backend-challenge-go/internal/observability"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/observability"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )

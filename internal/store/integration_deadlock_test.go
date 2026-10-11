@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
 )
 
 // The documented lock order (inbox, then wallet) prevents deadlocks between the application's own

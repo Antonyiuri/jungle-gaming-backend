@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/trace"
 	"github.com/google/uuid"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
-	"github.com/junglegaming/backend-challenge-go/internal/trace"
 )
 
 func TestEventsCarryTheRequestCorrelationAndFallBackToTheTransaction(t *testing.T) {

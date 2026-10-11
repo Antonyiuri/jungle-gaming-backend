@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/config"
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/junglegaming/backend-challenge-go/internal/config"
 )
 
 var ErrUnauthenticated = errors.New("authentication is required")

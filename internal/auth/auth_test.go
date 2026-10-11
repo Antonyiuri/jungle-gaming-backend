@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/config"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/junglegaming/backend-challenge-go/internal/config"
 )
 
 // idp is an in-process OpenID provider that publishes its keys and signs whatever claims a test needs.

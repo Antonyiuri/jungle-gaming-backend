@@ -8,9 +8,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/jsonutil"
-	"github.com/junglegaming/backend-challenge-go/internal/trace"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/jsonutil"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/trace"
 )
 
 const (

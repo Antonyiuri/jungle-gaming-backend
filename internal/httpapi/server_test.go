@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junglegaming/backend-challenge-go/internal/application"
-	"github.com/junglegaming/backend-challenge-go/internal/auth"
-	"github.com/junglegaming/backend-challenge-go/internal/config"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/observability"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/application"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/auth"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/config"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/observability"
 )
 
 // fakeVerifier maps bearer values to principals; everything else is unauthenticated.

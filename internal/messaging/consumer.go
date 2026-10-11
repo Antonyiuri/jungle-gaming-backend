@@ -9,15 +9,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/application"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/auth"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/observability"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/trace"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"github.com/junglegaming/backend-challenge-go/internal/application"
-	"github.com/junglegaming/backend-challenge-go/internal/auth"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/observability"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
-	"github.com/junglegaming/backend-challenge-go/internal/trace"
 )
 
 // Queue is the SQS subset required by the consumer and publisher.

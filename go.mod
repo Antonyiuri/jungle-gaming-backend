@@ -1,4 +1,4 @@
-module github.com/junglegaming/backend-challenge-go
+module github.com/Antonyiuri/jungle-gaming-backend
 
 go 1.27.2
 

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
 )
 
 type OutboxRecord struct {

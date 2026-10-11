@@ -23,12 +23,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/auth"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/config"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/httpapi"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/junglegaming/backend-challenge-go/internal/auth"
-	"github.com/junglegaming/backend-challenge-go/internal/config"
-	"github.com/junglegaming/backend-challenge-go/internal/httpapi"
 	"go.uber.org/fx"
 )
 

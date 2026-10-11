@@ -8,9 +8,9 @@ import (
 	"math"
 	"testing"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
 )
 
 // setWalletVersion rewrites a wallet's version as the table owner. The movement trigger protects the version

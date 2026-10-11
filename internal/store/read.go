@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
 	"github.com/jackc/pgx/v5"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
 )
 
 type LedgerEntry struct {

@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/junglegaming/backend-challenge-go/internal/observability"
-	"github.com/junglegaming/backend-challenge-go/internal/store"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/observability"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
 )
 
 // Observer refreshes the gauges that cannot be derived from request traffic: the unpublished outbox

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/junglegaming/backend-challenge-go/internal/auth"
-	"github.com/junglegaming/backend-challenge-go/internal/domain"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/auth"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/domain"
 )
 
 // Authorization runs before any persistence access, so these checks use a service without a store:

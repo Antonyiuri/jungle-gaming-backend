@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/junglegaming/backend-challenge-go/internal/store"
+	"github.com/Antonyiuri/jungle-gaming-backend/internal/store"
 )
 
 // References periodically retries pending reference transactions.
