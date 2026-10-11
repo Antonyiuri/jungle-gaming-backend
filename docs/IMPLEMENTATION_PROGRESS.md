@@ -94,10 +94,17 @@ O daemon caiu três vezes durante builds (`failed to receive status: rpc error: 
 
 Pegada deste trabalho depois da última rodada: `docker_data.vhdx` em 45,3 GB (+3,6 GB), volumes do projeto de 0,9 GB no total (`postgres-data` 459 MB com os dados dos testes, caches Go 440 MB), caches do projeto no host 0,5 GB + toolchain 0,3 GB. O `docker system df` mostra 7,5 GB de cache de build e 25 GB de imagens recuperáveis, em sua maior parte de outros projetos: decisão do dono da máquina.
 
+## Correções para publicação (10/10/2026)
+
+- Módulo Go renomeado para `github.com/Antonyiuri/jungle-gaming-backend` (`go.mod` e 71 imports). Sobre a versão renomeada: `gofmt` limpo, `go vet` (padrão, `integration`, `e2e`), 73 testes unitários e 115 testes de integração contra o PostgreSQL real passam (sem `-race`, que exige o container).
+- Trailer de ferramenta removido das 18 mensagens de commit anteriores; a árvore de arquivos foi conferida idêntica antes e depois da reescrita.
+- Notas de bastidor sobre o ambiente local removidas da documentação, e o estado de publicação atualizado.
+- Repositório publicado como **privado** em https://github.com/Antonyiuri/jungle-gaming-backend; tornar público é decisão do autor.
+
 ## Estado ao encerrar
 
-- Stack do projeto **parada** (`docker compose stop`); volume `jungle-gaming_postgres-data` preservado (dados de teste). Para religar: `docker compose up -d --build --wait app` (ou o perfil `e2e` com as três instâncias). A imagem local `jungle-gaming-backend:local` é a do código final.
-- Repositório Git **local e independente** em `jungle_gaming/` (`main`), commits por camada em inglês; **nenhum remoto configurado, nada publicado**. O repositório pai (`Área de Trabalho`) continua vendo `jungle_gaming/` como pasta não rastreada, sem alterações.
+- Stack do projeto **parada** (`docker compose stop`); volume `jungle-gaming_postgres-data` preservado (dados de teste). Para religar: `docker compose up -d --build --wait app` (ou o perfil `e2e` com as três instâncias).
+- Repositório Git próprio, branch `main`, commits por camada em inglês, publicado como **privado** em https://github.com/Antonyiuri/jungle-gaming-backend (tornar público é decisão do autor).
 
 ## Limites assumidos (não são pendências de teste)
 

@@ -10,7 +10,7 @@ Este relatório é o ponto de partida para quem vai avaliar, publicar ou dar con
 | --- | --- | --- |
 | **Completude funcional** | **Completa** para os requisitos obrigatórios e para os 10 critérios eliminatórios do enunciado. Nenhum requisito obrigatório ficou sem implementação; as lacunas encontradas na auditoria (abaixo) foram fechadas | §2 e §3 |
 | **Nota estimada pela rubrica oficial** | **≈ 95 / 100** (faixa plausível 92–97). É uma **estimativa minha**, não uma avaliação externa. Antes da auditoria eu a estimava em 94,5, com dois pontos que um avaliador atento descontaria (agregados de domínio não usados e sem `fx.Module`; IAM do broker apenas declarado) | §4 |
-| **Prontidão para publicação** | **Pronta, aguardando a sua decisão sobre o destino.** Repositório Git local e independente criado em `jungle_gaming/`, com histórico organizado, sem segredos e com `.gitignore`/`.gitattributes` adequados; **nada foi enviado a nenhum remoto**. Falta só a URL do repositório de destino | §8 |
+| **Prontidão para publicação** | **Pronta e publicada como repositório privado** em https://github.com/Antonyiuri/jungle-gaming-backend, com histórico em inglês, sem segredos e sem trailers de ferramentas. Tornar o repositório público é decisão do autor | §8 |
 
 Os pontos que continuam abertos e que importam (detalhe na §9): **IAM de uma AWS real** e o mapeamento `SenderId` → provedor não foram provados (só o emulador que aplica política, e ele não verifica o segredo da chave); **tracing e partidas dobradas** (bônus) não foram feitos de propósito; **sem benchmark** de vazão (a carga é teste de consistência).
 
@@ -79,6 +79,8 @@ Contagem por `go test -v` (testes de nível superior): **unitários 73** (domain
 | Checkout limpo (`git clone`, volumes novos, projeto Compose novo): `docker compose up --build` literal | Sobe do zero em **262 s** (build, PostgreSQL pelo bootstrap, migrations, 4 filas e 5 identidades com `iamEnforcementObserved: true`, realm do Keycloak importado em 109 s). Exemplos HTTP e SQS do README conferidos (`PROCESSED`, `80.00`, v2, replay, `409`, `403`, `401`, reconciliação consistente, SQS → `70.00`). **E2E 20 aprovados + 1 pulado**, 374 s. Parada graciosa: `app` sai com 0 e o comando literal termina com 0 |
 | E2E contra o LocalStack Community (`compose.localstack.yaml`) | **19 aprovados, 2 pulados**, 397 s: o provisionamento registra `iamEnforcementObserved: false` e `TestBrokerEnforcesQueuePermissionsPerIdentity` pula de propósito (não há fronteira para provar); o outro pulo é `TestNoDataRacesWereReported`. Tudo o mais passa, inclusive carga e caos |
 
+Depois dessas execuções, o módulo Go foi renomeado para `github.com/Antonyiuri/jungle-gaming-backend`, sem mudança de comportamento. Sobre a versão renomeada foram reexecutados `gofmt`, `go vet` (padrão, `integration` e `e2e`), os 73 testes unitários e os 115 testes de integração contra o PostgreSQL real, todos passando. A imagem Docker e o E2E não foram refeitos nesta etapa, porque a mudança é só o nome do módulo: as linhas acima que os citam foram executadas sobre o código com o caminho anterior.
+
 ### Classificação dos testes (o que usam de real e de falso)
 
 | Camada | Infraestrutura | O que prova | O que **não** prova |
@@ -114,11 +116,12 @@ SIGKILL antes do commit; entre commit e ACK (broker congelado); de todas as inst
 
 ## 8. Git e publicação
 
-- `git rev-parse --show-toplevel` no início apontava para o **repositório pai** (`Área de Trabalho`, remoto `Antonyiuri/trabalhando-com-branches`, ramo `feat/shell-central-aplicacoes-ui`), onde `jungle_gaming/` era uma pasta **não rastreada**. Adicioná-la ali misturaria o projeto com trabalho não relacionado; por isso foi criado um repositório **independente** dentro de `jungle_gaming/` (`git init -b main`), que o repositório pai continua vendo como pasta não rastreada, sem alteração.
-- Conteúdo versionado: 85 arquivos de código, migrations, Compose, documentação e testes. **Não** são versionados `.env`, `.local/` (chaves IAM geradas), `.cache/`, `.tools/` (toolchain Go local) nem binários.
+- Repositório: https://github.com/Antonyiuri/jungle-gaming-backend, **privado** nesta versão. Tornar o repositório público é decisão do autor e não altera o código.
+- Branch `main`, histórico em inglês, organizado por camada (domínio → banco → persistência → casos de uso → HTTP → mensageria → workers → composição → build → E2E → documentação). Cada commit que contém código compila e passa em `go build` e `go vet` (verificado em *worktrees* temporários).
+- Autoria: o endereço `noreply` do GitHub. Nenhum commit ou mensagem traz e-mail pessoal ou corporativo, e nenhum traz trailer de ferramenta.
+- Módulo Go: `github.com/Antonyiuri/jungle-gaming-backend`. As URLs do desafio oficial nesta documentação continuam apontando para o repositório original.
+- Conteúdo versionado: código, migrations, Compose, documentação e testes. **Não** são versionados `.env`, `.local/` (chaves IAM geradas), `.cache/`, `.tools/` (toolchain Go local) nem binários.
 - Varredura de segredos nos arquivos versionados: sem chaves privadas, chaves AWS, tokens ou JWTs. Os únicos achados são os **valores descartáveis do ambiente local**, rotulados como tais (`localpassword`, `local-admin-password`, `local-<cliente>-secret`), necessários para o provisionamento reproduzível do IdP e do banco.
-- Histórico em inglês, em commits por camada (domínio → banco → persistência → casos de uso → HTTP → mensageria → workers → composição → build → E2E → documentação). Cada commit que contém código compila e passa em `go build` e `go vet` (verificado em *worktrees* temporários). **Nenhum remoto foi configurado e nada foi publicado.**
-- Para publicar (depois que você escolher o destino): `git remote add origin <URL>` e `git push -u origin main`. Se o destino for público, revise antes a licença e os nomes de pessoas no repositório.
 
 ## 9. Problemas remanescentes
 
