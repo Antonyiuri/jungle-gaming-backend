@@ -2,7 +2,7 @@
 
 Backend que processa operações de jogos (`BET`, `WIN`, `LOSS`, `REFUND`, `ROLLBACK`) por **HTTP e SQS**, com saldo exato, ledger auditável, idempotência persistente e recuperação após falhas entre processos.
 
-O projeto parte do [desafio oficial da Jungle Gaming](https://github.com/junglegaming/backend-challenge-go). Interpretações e decisões próprias estão em [ARCHITECTURE.md](ARCHITECTURE.md); requisitos, riscos e a **matriz de evidências** (requisito → teste que o comprova) estão em [docs/CHALLENGE_ANALYSIS.md](docs/CHALLENGE_ANALYSIS.md); o histórico de execução, com resultados reais, está em [docs/IMPLEMENTATION_PROGRESS.md](docs/IMPLEMENTATION_PROGRESS.md).
+O projeto parte do [desafio oficial da Jungle Gaming](https://github.com/junglegaming/backend-challenge-go). As decisões de projeto estão em [ARCHITECTURE.md](ARCHITECTURE.md); a matriz que liga cada requisito ao teste que o comprova, em [docs/CHALLENGE_ANALYSIS.md](docs/CHALLENGE_ANALYSIS.md); os comandos e resultados das verificações, em [docs/VALIDATION.md](docs/VALIDATION.md).
 
 Código, nomes, comentários, logs e mensagens da API estão em inglês; a documentação explicativa, em português.
 
@@ -41,17 +41,17 @@ HTTP e SQS chamam o **mesmo caso de uso** ([internal/application](internal/appli
 
 As transições são validadas pelo agregado [`WagerTransaction`](internal/domain/transaction.go) antes de qualquer escrita: estados terminais são imutáveis, `FAILED`/`REJECTED` exigem código e `PROCESSED` exige saldo e versão.
 
-`FAILED` tem **um** produtor legítimo: a carteira não consegue mais avançar o contador de versão (`WALLET_VERSION_EXHAUSTED`, `int64` esgotado). É um fato determinístico — nenhuma nova tentativa pode funcionar — e só vale para decisões que exigem movimento (uma `LOSS`, ou uma `BET` que já seria `INSUFFICIENT_FUNDS`, continuam funcionando). **Erros de banco, timeouts e falhas do publisher nunca viram `FAILED`**: não provam nada sobre a transação e uma nova tentativa com a mesma chave é segura. HTTP responde `500` com `status: "FAILED"`; uma entrega SQS é registrada na inbox com disposição `DLQ`, não é reconhecida e o *redrive* do broker a leva à DLQ em segundos.
+`FAILED` é a falha permanente registrada para auditoria. A solução o produz em **um** caso: a carteira não consegue mais avançar o contador de versão (`WALLET_VERSION_EXHAUSTED`, `int64` esgotado), uma impossibilidade técnica permanente de registrar a movimentação, determinística, que nenhuma nova tentativa resolve. Só decisões que exigem movimento falham assim: uma `LOSS`, ou uma `BET` que já seria `INSUFFICIENT_FUNDS`, seguem normais. Erros de banco, timeouts e falhas do publisher são transitórios e nunca viram `FAILED`: repetir com a mesma chave é seguro. O HTTP responde `500` com `status: "FAILED"`; uma entrega SQS é registrada na inbox com disposição `DLQ`, não é reconhecida e o *redrive* do broker a leva à DLQ em segundos.
 
 Valores exigem exatamente duas casas (`{"amount":"20.00","currency":"BRL"}`); os endpoints aceitam BRL. Uma referência só recebe **uma** reversão bem-sucedida, somando `REFUND` e `ROLLBACK`. Uma reversão que chega antes da aposta fica `PENDING_REFERENCE` (HTTP `202`) e é concluída por um worker em qualquer instância; se a referência não aparecer em 24 h, vira rejeição definitiva `REFERENCE_NOT_FOUND`.
 
 ## Pré-requisitos
 
-- Docker Desktop (ou Engine) com Compose v2 e containers Linux. **Reserve ≥ 4 GB de RAM para a VM do Docker**: o Keycloak é pesado e, em 3,5 GB, o primeiro boot levou ~15 minutos (os seguintes são bem mais rápidos).
-- PowerShell para os exemplos abaixo.
-- Go 1.27.2 no host somente para rodar os testes de integração/E2E fora de container (os unitários com `-race` rodam no container `tests`).
+- Docker (Desktop ou Engine) com Compose v2 e containers Linux. Reserve ≥ 4 GB de RAM para a VM do Docker e ≥ 5 GB de disco livre: o Keycloak é pesado no primeiro boot.
+- PowerShell para os exemplos abaixo (os mesmos comandos funcionam em `curl`).
+- Go 1.27.2 para `go test`, `go vet` e os testes de integração/E2E no host. A flag `-race` exige compilador C: use o container `tests` ou um host Linux/macOS.
 - A porta `5432` do host costuma estar ocupada por um PostgreSQL local; por isso o Compose publica o banco em **`15432`** por padrão (`POSTGRES_PORT`). O `.env` é **opcional**: sem ele, `docker compose up --build` já usa esses padrões.
-- Em Windows, o .NET do PowerShell **não resolve `*.localhost`**: os exemplos obtêm o token em `127.0.0.1:8081`. O Keycloak tem o *hostname* fixado em `idp.localhost`, então o claim `iss` é o mesmo (os containers usam `idp.localhost` por alias de rede).
+- No Windows, o PowerShell não resolve `*.localhost`: os exemplos obtêm o token em `127.0.0.1:8081`. O Keycloak fixa o *hostname* `idp.localhost`, então o claim `iss` é o mesmo dentro e fora do Compose.
 
 ## Subir o ambiente
 
@@ -199,24 +199,17 @@ Eventos de saída vão para `wallet-events.fifo` (`MessageGroupId = walletId`, `
 
 ## Testes
 
-Resultados observados nesta máquina sobre o código final (detalhes, defeitos achados e a auditoria de finalização em [docs/IMPLEMENTATION_PROGRESS.md](docs/IMPLEMENTATION_PROGRESS.md) e [docs/FINAL_VALIDATION_REPORT.md](docs/FINAL_VALIDATION_REPORT.md)):
-
-| Execução | Resultado |
-| --- | --- |
-| `go vet` (padrão, `integration`, `e2e`), `gofmt`, `go test ./...` no host | Limpos; 73 testes unitários passam |
-| `go test -race -tags integration ./...` no container, PostgreSQL real | 115 passam (73 unitários + 42 de integração); nenhuma "DATA RACE" |
-| E2E (21 testes, 20 ativos) na pilha padrão: MiniStack, três instâncias, Keycloak e PostgreSQL reais, `E2E_REQUIRE_BROKER_IAM=1`, 431 s | **20 aprovados, 1 pulado por desenho** (`TestNoDataRacesWereReported`, que exige instâncias `-race`) |
-| E2E com as três instâncias **compiladas com `-race`** e `E2E_RACE=1` | **21/21 aprovados** (inclui `TestNoDataRacesWereReported`), 325 s: as três instâncias compiladas com `-race` atravessaram a suíte inteira (carga, caos, `FAILED`, token expirado) sem reportar "DATA RACE" |
-| **Checkout limpo** (`git clone`, projeto Compose e volumes novos): `docker compose up --build` literal, exemplos HTTP e SQS deste README e E2E | Sobe do zero em 262 s (PostgreSQL pelo bootstrap, migrations, filas e identidades, realm do Keycloak importado); exemplos HTTP e SQS deste README com os resultados descritos; **E2E 20 aprovados + 1 pulado por desenho** (374 s); parada graciosa com saída 0 |
-| Carga mista de 20 s e **caos** de 40 s (instâncias mortas com SIGKILL) na pilha padrão | 967 e 2 122 operações (HTTP + SQS) aplicadas uma única vez, saldos recalculados = armazenados; latência HTTP p50 148–178 ms, p95 ≈ 0,85–0,90 s, p99 1,6–1,9 s (observação, não benchmark) |
+Comandos (resultados e commit verificado em [docs/VALIDATION.md](docs/VALIDATION.md)):
 
 ```powershell
 # Unitários e análise estática (host)
+gofmt -l .
 go vet ./...
 go test ./...
 
 # Unitários + integração com -race, em container (tem compilador C), contra o PostgreSQL real
 docker compose -f compose.yaml -f compose.test.yaml run --rm tests go test -race -tags integration -count=1 ./...
+# Em um host com compilador C (Linux, macOS): go test -race ./...
 
 # Fim a fim: três instâncias, Keycloak, PostgreSQL e broker reais, com injeção de falhas via Docker
 docker compose --profile e2e up -d --build --wait app app-2 app-3
@@ -230,6 +223,8 @@ $env:E2E_RACE = '1'; go test -tags e2e -count=1 -v -timeout 40m ./tests/e2e/
 # Mesma suíte contra o LocalStack Community (não aplica IAM: o teste da matriz de permissões pula)
 docker compose -f compose.yaml -f compose.localstack.yaml --profile e2e up -d --build --wait app app-2 app-3
 ```
+
+Um workflow de CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) executa `gofmt`, `go vet` e os testes unitários (com `-race`) a cada push.
 
 ### O que cada camada usa de real e de falso
 
@@ -263,23 +258,17 @@ O desafio pede que o acesso às filas seja controlado "por credenciais e políti
 
 Evidência: o provisionamento sonda o broker com 8 chamadas somente de leitura e grava o resultado em `.local/broker-security.json` (`iamEnforcementObserved`); o teste E2E `TestBrokerEnforcesQueuePermissionsPerIdentity` exercita 24 recusas (incluindo `PurgeQueue` e `SendMessage` fora do papel) e as permissões de que cada papel precisa. Ele só executa chamadas que alteram filas depois de provar, por leituras inofensivas, que o broker de fato recusa — num broker que não aplica política, **pula** (ou **falha**, com `E2E_REQUIRE_BROKER_IAM=1`) em vez de declarar uma fronteira que não existe. A suíte inteira roda com as identidades por papel, então as permissões concedidas também são provadas **suficientes**.
 
-Limites conhecidos, sem rodeios:
+Limites: o emulador não verifica o segredo da chave de acesso e autoriza pelo nome da chamada (a política nomeia também `sqs:DeleteMessageBatch`); o LocalStack Community (`compose.localstack.yaml`) não aplica IAM, e nele o teste da matriz de permissões pula. O provedor é identificado pelo JWT da mensagem, não pelo `SenderId` (ver [ARCHITECTURE.md §10 e §16](ARCHITECTURE.md)).
 
-- O emulador **não verifica o segredo** da chave de acesso (uma chave existente é aceita com qualquer segredo); recusa chaves inexistentes e aplica a política da identidade.
-- `SenderId` é o id da conta para todos os remetentes. O que identifica o **provedor** é o JWT validado pelo consumidor, cujo `client id` entra no hash da inbox.
-- O MiniStack autoriza pelo **nome da chamada**: `DeleteMessageBatch` exige `sqs:DeleteMessageBatch` (na AWS real o lote é coberto por `sqs:DeleteMessage`). A política concede as duas formas. A primeira execução da suíte contra este broker falhou exatamente aí — o consumidor de eventos da suíte apagava em lote — o que também mostra que a política é de fato avaliada.
-- `docker compose -f compose.yaml -f compose.localstack.yaml ...` usa o LocalStack Community, que **não aplica IAM** (nem com `ENFORCE_IAM=1`, verificado na 4.14.0): lá o controle de acesso das filas é declarado, não provado.
-- Em AWS real, somam-se o mapeamento `SenderId` → provedor e políticas por conta/papel — **não implementado nem provado aqui**.
+## Limitações
 
-## Limitações e decisões que você precisa conhecer
+Lista completa em [ARCHITECTURE.md §16](ARCHITECTURE.md#16-limitações-e-escopo). Em resumo:
 
-- **O isolamento entre provedores não vem do broker**: todos os remetentes aparecem com o mesmo `SenderId` (a conta). A autorização é feita pela aplicação: o JWT do provedor viaja no atributo `Authorization` da mensagem, é validado pelo consumidor (assinatura, *issuer*, *audience*, validade) e o `client id` autenticado entra no hash da inbox como identidade estável do emissor. O broker restringe **o que cada papel pode fazer nas filas** (seção acima), não quem é o provedor.
+- O broker local é um emulador: autoriza pelas políticas das identidades, mas não valida o segredo da chave de acesso. A autorização do provedor vem do JWT, não do broker.
+- Uma carteira por jogador e moeda; endpoints em BRL; reversões integrais; ledger sem partidas dobradas e sem tracing distribuído (diferenciais opcionais, não implementados).
+- Eventos de saída são at-least-once e podem chegar fora de ordem entre publishers concorrentes; consumidores deduplicam por `eventId` e ordenam por `walletVersion`.
 - Keycloak em modo desenvolvimento, HTTP e segredos de exemplo: somente ambiente local.
-- Uma carteira por jogador/moeda; endpoints em BRL; reversões integrais. **Sem partidas dobradas e sem tracing distribuído (OpenTelemetry)**: são bônus; o ledger de lançamentos simples já é auditável e reconciliável, e a correlação ponta a ponta usa `correlationId` (HTTP → inbox → eventos). Não foram feitos de propósito: exigiriam migração de esquema e novas dependências em um sistema cujo caminho financeiro já está provado. Não há *benchmark* de vazão: a carga mista acima é um teste de **consistência** e seus números são observações desta máquina, não metas nem garantias.
-- Eventos são at-least-once e podem chegar fora de ordem entre publishers concorrentes.
-- **Espaço em disco:** Docker Desktop, imagens, volumes e builds exigem folga em `C:` (recomendado ≥ 5 GB livres). Com o disco cheio o daemon cai com `input/output error` — foi o que ocorreu durante o desenvolvimento.
-- **Relógio:** a VM do Docker Desktop pode dar saltos de relógio. A aplicação não depende da ordem entre `created_at` e `updated_at` (ver [ARCHITECTURE.md §16](ARCHITECTURE.md)), e todos os timestamps de uma carteira vêm do relógio do banco.
-- **Reinício de instância:** o encerramento gracioso espera o *long-poll* do SQS em andamento terminar (até ~20 s) para não abandonar uma mensagem entregue a uma requisição cancelada; instâncias mortas à força (SIGKILL) podem reter mensagens em voo até o fim da visibilidade (60 s) — nada se perde, a mensagem só atrasa.
+- Instâncias mortas à força (SIGKILL) podem reter mensagens em voo até o fim da visibilidade (60 s): nada se perde, só atrasa. O encerramento gracioso espera o long poll em andamento (até ~20 s).
 
 ## Estrutura
 

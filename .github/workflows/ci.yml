@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - name: go vet (default, integration and e2e build tags)
+        run: |
+          go vet ./...
+          go vet -tags integration ./...
+          go vet -tags e2e ./...
+      - name: unit tests with the race detector
+        run: go test -race -count=1 ./...
